@@ -3,7 +3,7 @@ import numpy as np
 
 def draw_circle(event, x, y, flags, param):
     if event == cv2.EVENT_LBUTTONDBLCLK:
-        cv2.circle(img,(x,y),1,(255,0,0),-1)
+        cv2.circle(img,(x,y),8,(255,0,0),-1)
 
 img = np.zeros((512,512,3), np.uint8)
 cv2.namedWindow('image')

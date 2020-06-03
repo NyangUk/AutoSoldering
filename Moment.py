@@ -21,11 +21,16 @@ for cnt in contours:
     mmt = cv.moments(cnt)
     
     for key,value in mmt.items():
-        cx = int(mmt['m10']/mmt['m00']) 
-        cy = int(mmt['m01']/mmt['m00'])
+        try : 
+            cx = int(mmt['m10']/mmt['m00']) 
+            cy = int(mmt['m01']/mmt['m00'])
+        except ZeroDivisionError:
+            pass
         ccl[cx] = cy
+    
     for key,value in ccl.items():
         print('%d :\t %d' %(key,value))
+        
     
 
 

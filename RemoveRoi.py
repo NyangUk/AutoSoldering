@@ -42,6 +42,12 @@ OriginalImg = cv2.resize(OriginalImg ,(640,480))
 
 
 while True:
+
+    if StartProcess ==True:
+        ShowImg = OriginalImg
+        SelectedImg =OriginalImg
+        StartProcess =False
+
     cv2.imshow('img',ShowImg)   
     cv2.imshow('selectedImg',SelectedImg) 
     
@@ -58,12 +64,3 @@ while True:
         break
 
 cv2.destroyAllWindows()
-
-if __name__ == "__main__":
-    
-    if StartProcess ==True:
-        ShowImg = OriginalImg
-        SelectedImg =OriginalImg
-        StartProcess =False
-    # output = grabcut()
-    # cv2.imwrite('output.png', output)

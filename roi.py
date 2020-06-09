@@ -9,20 +9,20 @@ OriginalImg = np.zeros((640,600,3),np.uint8)
 result1 = np.zeros((640,600,3),np.uint8)
 mask = np.zeros((640,600,3),np.uint8)
 
-click = False     
+# click = False     
 x1,y1,x2,y2 = -1,-1,-1,-1
 
 
 
 def CallMouse(event ,x,y,flags,param):
-    global x1,y1,x2,y2,click,result1,mask
+    global x1,y1,x2,y2,result1,mask#,click
     result1 = OriginalImg
     if event == cv2.EVENT_LBUTTONDOWN:  # 마우스 누를때
-        click = True
+        # click = True
         x1,y1 =x,y
 
     elif event == cv2.EVENT_LBUTTONUP: # 마우스 땔때
-        click ==False
+        # click =False
         x2,y2 =x,y
         cv2.rectangle(result1,(x1,y1),(x2,y2),(255,255,255),-1)
         

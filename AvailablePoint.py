@@ -23,7 +23,7 @@ def FindHole(OriginalImg):
         area = cv.contourArea(cnt)
         
         if area> 100 and area<250:
-            cv.drawContours(ImgColor, [cnt], 0, (255, 0, 255), 1)  # 컨투어 그리기
+            # cv.drawContours(ImgColor, [cnt], 0, (255, 0, 255), 1)  # 컨투어 그리기
             # 컨투어의 중심좌표구하기 
             mmt = cv.moments(cnt)
             for key,value in mmt.items():
@@ -34,14 +34,15 @@ def FindHole(OriginalImg):
                     pass
                 ccl[cx] = cy
             for key,value in ccl.items():
-                cv.line(zeroImg,(key,value),(key,value),(255,0,0),7) # 중심좌표그리기
-                cv.line(ImgColor,(key,value),(key,value),(255,0,0),7)
-                print('%d :\t %d' %(key,value))
+                cv.line(zeroImg,(key,value),(key,value),(255,0,0),4) # 중심좌표그리기
+                cv.line(ImgColor,(key,value),(key,value),(255,0,0),4)
+                # print('%d :\t %d' %(key,value))
 
       
     cv.imshow("result" ,ImgColor) # 보여주기용
     cv.imshow("hole",zeroImg)
     cv.imwrite('findhole.jpg',zeroImg)
+    cv.imwrite('availablepoint.jpg',ImgColor)
     cv.waitKey(0)
 
 

@@ -6,6 +6,10 @@ import numpy as np
 #contours center location dictionary
 ccl = {} 
 img_color = cv.imread('AutoSolding/PCB1.jpg')
+h,w,c =img_color.shape[:]
+
+# np.ones((3,3),np.uint8)
+zeroImg = np.zeros((w,h),np.uint8)
 
 def FindHole(OriginalImg):
     ImgColor = OriginalImg.copy()
@@ -19,7 +23,7 @@ def FindHole(OriginalImg):
         area = cv.contourArea(cnt)
         
         if area> 100 and area<250:
-            cv.drawContours(ImgColor, [cnt], 0, (255, 0, 0), 1)  # 컨투어 그리기
+            cv.drawContours(ImgColor, [cnt], 0, (255, 0, 255), 1)  # 컨투어 그리기
             # 컨투어의 중심좌표구하기 
             mmt = cv.moments(cnt)
             for key,value in mmt.items():
@@ -30,11 +34,14 @@ def FindHole(OriginalImg):
                     pass
                 ccl[cx] = cy
             for key,value in ccl.items():
-                cv.line(ImgColor,(key,value),(key,value),(0,0,255),10) # 중심좌표그리기
+                cv.line(zeroImg,(key,value),(key,value),(255,0,0),7) # 중심좌표그리기
+                cv.line(ImgColor,(key,value),(key,value),(255,0,0),7)
                 print('%d :\t %d' %(key,value))
 
       
-    cv.imshow("컨투어 후" ,ImgColor)
+    cv.imshow("result" ,ImgColor) # 보여주기용
+    cv.imshow("hole",zeroImg)
+    cv.imwrite('findhole.jpg',zeroImg)
     cv.waitKey(0)
 
 

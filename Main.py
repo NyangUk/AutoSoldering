@@ -9,18 +9,19 @@ checkflag = False
 
 
 MainBoard = cv2.imread("MainBoard.jpg")
-DeleteBoard = cv2.imread("DeleteBoard.jpg")
+# DeleteBoard = cv2.imread("DeleteBoard.jpg")
 # flag= Flase
 OriginalCcl = {}  # 원본영상의 모든 납땝가능한 홀의 좌표
 SelectedCcl = {}  # 납땜하고자하는 spot을 지정해둔 홀의 좌표
 
-DummyImg = cv2.imread('PCB(0).jpg') # 디폴트로 이전영상의 이미지를 넣어둠 캡쳐를 통해 갱신할예정
+DummyImg = cv2.imread('PCB(0).jpg') # 디폴트
+
 H,W,C =DummyImg.shape
 OnlyHoleImg = np.zeros((H,W,C),np.uint8)
 FindedHoleImg = np.zeros((H,W,C),np.uint8)
 OriginalImg = np.zeros((H,W,C),np.uint8)
 RoiImg = np.zeros((H,W,C),np.uint8)     # PCB(0).jpg 또는 활성화 지역
-ActiveHoleImg = np.zeros((H,W,C))
+ActiveHoleImg = np.zeros((H,W,C),np.uint8)
 
 
 SelectPointImg = np.zeros((H,W,C),np.uint8)
@@ -202,30 +203,8 @@ def CheckHole():
     # cv2.imshow('ActiveHoleImg',ActiveHoleImg)
 
                 
-
-def DeleteImg():
-    k = cv2.waitKey(1) & 0xFF
-
-    if k==ord('1'):
-        print("roi 이미지 삭제")
-        print('2')
-    elif k==ord('2'):
-        print('3')
-        print("납땜 선택된 Point 이미지 삭제.")
-    elif k==ord('3'):
-        print("모든 이미지 삭제. (리셋)")
-        print('0')
-    elif k==ord('0'):
-        print("뒤로가기")
-        print('0')
-
-    
-
-
-# cv.destroyWindow('dd')
-
-def WaitKey():
-    global capflag,roiflag,findflag,selectflag
+def AutoSoldering():
+    global capflag,roiflag,findflag,selectflag,checkflag,OriginalCcl,SelectedCcl 
     while True:
         
         cv2.imshow('Menu',MainBoard)
@@ -234,32 +213,42 @@ def WaitKey():
         if k==ord('1'):
             if capflag:
                 cv2.destroyWindow('Menu')
-                print("이미지를 캡쳐합니다.")
+                print("이미지를 캡쳐합니다...")
                 CapturePCB()
         elif k==ord('2'):
-            if roiflag:
+            if not capflag and roiflag:
                 cv2.destroyWindow('Menu')
-                print("Roi 설정합니다.")
+                print("Roi 설정합니다...")
                 CropRoi()
         elif k==ord('3'):
             if findflag:
                 cv2.destroyWindow('Menu')
-                print("납땜가능 spot을 찾습니다.")
+                print("납땜 가능한 포인트를 찾습니다...")
                 FindHole()                
         elif k==ord('4'):
-            if selectflag:
+            if not capflag and not roiflag and selectflag:
                 cv2.destroyWindow('Menu')
-                print("납땜 하고자하는 지역 선택")
+                print("납땜 하고자하는 포인트를 선택합니다...")
                 SelectPoint()
         elif k==ord('5'):
             if not capflag and not roiflag and not selectflag:
                 cv2.destroyWindow('Menu')
-                print("모든 준비 완료 납땜 가능지역을 활성화합니다")
+                print("모든 준비 완료! 납땜 가능지역을 활성화합니다...")
                 SoldingPoint()
+        elif k==ord('R'):
+            cv2.destroyWindow('Menu')
+            print("RESET 합니다...")
+            capflag= True
+            roiflag= True
+            selectflag= True
+            findflag = False
+            checkflag = False
+            SelectedCcl.clear()
+            OriginalCcl.clear()
         elif k== 27: # esc
             cv2.destroyWindow('Menu')
-            print("프로그램을 종료합니다.")
+            print("프로그램을 종료합니다...")
             break
 
 if __name__ == "__main__":
-    WaitKey()
+    AutoSoldering()

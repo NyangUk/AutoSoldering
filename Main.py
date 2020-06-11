@@ -4,6 +4,8 @@ import numpy as np
 capflag= True
 roiflag= True
 selectflag= True
+findflag = False
+
 
 MainBoard = cv2.imread("MainBoard.jpg")
 DeleteBoard = cv2.imread("DeleteBoard.jpg")
@@ -17,7 +19,6 @@ HoleImg = np.zeros((H,W,C),np.uint8)
 OriginalImg = np.zeros((H,W,C),np.uint8)
 oriSP = np.zeros((H,W,C),np.uint8)      # AppliedROI.jpg
 RoiImg = np.zeros((H,W,C),np.uint8)     # PCB(0).jpg 또는 활성화 지역
-RoiImg = np.zeros((H,W,C),np.uint8)
 mask = np.zeros((H,W,C),np.uint8)
 
 
@@ -59,32 +60,32 @@ def CapturePCB():  # PCB기판 이미지 캡쳐
     capture.release()
 
 def FindHole():
-    # global 
+    global RoiImg,findflag
     def nothing(x):
         pass
     cv2.namedWindow('FindHole')
 
-    cv2.createTrackbar('low threshold', 'FindHole', 0, 1000, nothing)
-    cv2.createTrackbar('high threshold', 'FindHole', 0, 1000, nothing)
+    cv2.createTrackbar('low', 'FindHole', 0, 255, nothing)
+    cv2.createTrackbar('high', 'FindHole', 0, 255, nothing)
 
-    cv2.setTrackbarPos('low threshold', 'FindHole', 100)
-    cv2.setTrackbarPos('high threshold', 'FindHole', 230)
+    cv2.setTrackbarPos('low', 'FindHole', 100)  #트랙바의 초기 value 설정
+    cv2.setTrackbarPos('high', 'FindHole', 230)
 
-    CapturedImg = cv2.imread('PCB(0).jpg') 
+    # CapturedImg = cv2.imread('PCB(0).jpg') 
+    CapturedImg = RoiImg.copy()
     HoleImg = np.zeros((H,W,C),np.uint8)
 
-    ImgGray = cv2.cvtColor(CapturedImg, cv2.COLOR_BGR2GRAY)
+    GrayImg = cv2.cvtColor(CapturedImg, cv2.COLOR_BGR2GRAY)
 
     while(True):
-        low = cv2.getTrackbarPos('low threshold', 'FindHole')
-        high = cv2.getTrackbarPos('high threshold', 'FindHole')
-
-        ret, img_binary = cv2.threshold(ImgGray, low, high, 0)
+        low = cv2.getTrackbarPos('low', 'FindHole')
+        high = cv2.getTrackbarPos('high', 'FindHole')
+        HoleImg = np.zeros((H,W,C),np.uint8)
+        ret, img_binary = cv2.threshold(GrayImg, low, high, 0)
         _,contours, hierarchy= cv2.findContours(img_binary, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
 
         for cnt in contours:
             area = cv2.contourArea(cnt)
-
             if area> 60 and area<250:
                 # cv2.drawContours(CapturedImg, [cnt], 0, (255, 0, 255), 1)  # 컨투어 그리기
                 # 컨투어의 중심좌표구하기 
@@ -100,13 +101,16 @@ def FindHole():
                     cv2.line(HoleImg,(key,value),(key,value),(255,255,255),4) # 중심좌표그리기
                     cv2.line(CapturedImg,(key,value),(key,value),(0,0,255),4)
         cv2.imshow("FindHole" ,CapturedImg)  # 원본이미지 위에  Hole
-        cv2.imshow("hole",HoleImg)          # Hole 만 활성화 
+        cv2.imshow("OnlyHole",HoleImg)          # Hole 만 활성화 
         if cv2.waitKey(1)&0xFF==32:
+            print("납땜가능 spot을 찾았습니다.")
+            findflag = True
             break
-
+    cv2.destroyWindow('FindHole')
+    cv2.destroyWindow('OnlyHole')        
     cv2.imwrite('Hole(Checking).jpg',HoleImg)
     cv2.imwrite('Hole(Showing).jpg',CapturedImg)
-    cv2.waitKey(0)
+    # cv2.waitKey(0)
 
 def SoldingPoint():
     img =  cv2.imread("AutoSolding/result.jpg",cv2.IMREAD_GRAYSCALE)
@@ -140,21 +144,23 @@ def CallROIMouse(event ,x,y,flags,param):
 
 
 def CropRoi():
-    global roiflag ,RoiImg
+    global roiflag,findflag ,RoiImg
     RoiImg =OriginalImg.copy()
     while True:
-        cv2.imshow('img',RoiImg)
-        cv2.namedWindow('img')
-        cv2.setMouseCallback('img',CallROIMouse)
+        cv2.imshow('Remove ROI',RoiImg)
+        cv2.namedWindow('Remove ROI')
+        cv2.setMouseCallback('Remove ROI',CallROIMouse)
 
         if cv2.waitKey(1)&0xFF == 27:
             print("roi 선택을 그만두셨습니다.")               
             break
         elif cv2.waitKey(1)&0xFF == ord('s'):
-            cv2.imwrite('AppliedROI.jpg',RoiImg)
+            cv2.imwrite('RemoveROI.jpg',RoiImg)
             roiflag =False
+            findflag =True # roi이미지가 있어야만 납땜가능 구역을 찾을수있음
             print("roi 선택 완료")   
-            break   
+            break
+    cv2.destroyWindow('Remove ROI')
 
 def CallPointMouse(event ,x,y,flags,param):
     global x1,y1,x2,y2,click,SelectPointImg
@@ -220,7 +226,7 @@ def DeleteImg():
 # cv.destroyWindow('dd')
 
 def WaitKey():
-    # global capflag,roiflag,selectflag
+    global capflag,roiflag,findflag,selectflag
     while True:
         
         cv2.imshow('Menu',MainBoard)
@@ -235,14 +241,18 @@ def WaitKey():
             if roiflag:
                 cv2.destroyWindow('Menu')
                 print("Roi 설정합니다.")
-                CropRoi()                
+                CropRoi()
         elif k==ord('3'):
+            if findflag:
+                cv2.destroyWindow('Menu')
+                print("납땜가능 spot을 찾습니다.")
+                FindHole()                
+        elif k==ord('4'):
             if selectflag:
                 cv2.destroyWindow('Menu')
                 print("납땜 하고자하는 지역 선택")
-                print('3')
                 SelectPointImg()
-        elif k==ord('4'):
+        elif k==ord('5'):
             if capflag and roiflag and selectflag:
                 cv2.destroyWindow('Menu')
                 print("모든 준비 완료 납땜 가능지역을 활성화합니다")

@@ -27,8 +27,6 @@ def CallMouse(event ,x,y,flags,param):
         x2,y2 =x,y
         cv2.rectangle(RoiImg,(x1,y1),(x2,y2),(0,0,0),-1)
     
-     
-
 def CropRoi():
     global RoiImg
     while True:

@@ -20,7 +20,7 @@ OnlyHoleImg = np.zeros((H,W,C),np.uint8)
 FindedHoleImg = np.zeros((H,W,C),np.uint8)
 OriginalImg = np.zeros((H,W,C),np.uint8)
 RoiImg = np.zeros((H,W,C),np.uint8)     # PCB(0).jpg 또는 활성화 지역
-mask = np.zeros((H,W,C),np.uint8)
+ActiveHoleImg = np.zeros((H,W,C))
 
 
 SelectPointImg = np.zeros((H,W,C),np.uint8)
@@ -29,9 +29,7 @@ click = False
 events = [i for i in dir(cv2) if 'EVENT' in i] 
 
 # 클릭이 되었을때 드래그 할것 이므로 Click flag 넘기기
-oriSP = np.zeros((H,W,C),np.uint8)      # AppliedROI.jpg
 
-SelectPointImg = np.zeros((H,W,C),np.uint8)
 click = False       
 x1,y1,x2,y2 = -1,-1,-1,-1
 
@@ -106,7 +104,8 @@ def FindHole(): # OnlyHole
     # cv2.waitKey(0)
 
 def SoldingPoint():
-    zero = HoleImg.copy()
+    global ActiveHoleImg
+    img =ActiveHoleImg.copy()
     ret, img_binary = cv2.threshold(img, 127, 255, 0)
     _,contours, hierarchy = cv2.findContours(img_binary, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
     for cnt in contours:
@@ -120,9 +119,9 @@ def SoldingPoint():
             SelectedCcl[cx] = cy
         for key,value in SelectedCcl.items():
             if OriginalCcl.get(key):
-                cv2.line(zero,(key,value),(key,value),(255,0,0),13) # 중심좌표그리기
-                # cv2.circle(HoleImg,(key,value),7,(0,255,0),-1)
-    cv2.imshow('final',zero)
+                cv2.line(img,(key,value),(key,value),(255,0,0),13) # 중심좌표그리기
+                
+    cv2.imshow('final',img)
     cv2.waitKey(0)
 
 def CallROIMouse(event ,x,y,flags,param):
@@ -192,11 +191,13 @@ def SelectPoint():
 
 
 def CheckHole():
-    global SelectPointImg,OnlyHoleImg
+    global SelectPointImg,OnlyHoleImg,ActiveHoleImg
     mask = SelectPointImg.copy()
     img = OnlyHoleImg.copy()
+    mask = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)
+    img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     ret, mask = cv2.threshold(mask ,10, 255, cv2.THRESH_BINARY)
-    ActiveHoleImg=cv2.bitwise_and(img,mask,mask =mask)
+    ActiveHoleImg =cv2.bitwise_and(img,mask,mask =mask)
     # cv2.imwrite('result.jpg',result)
     # cv2.imshow('ActiveHoleImg',ActiveHoleImg)
 

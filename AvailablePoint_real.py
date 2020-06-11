@@ -8,34 +8,27 @@ SelectedCcl = {}  # 납땜하고자하는 spot을 지정해둔 홀의 좌표
 
 DummyImg = cv2.imread('PCB.jpg') # 디폴트로 이전영상의 이미지를 넣어둠 캡쳐를 통해 갱신할예정
 h,w,c =DummyImg.shape[:]
-zeroImg = np.zeros((h,w),np.uint8)
+HoleImg = np.zeros((h,w),np.uint8)
 OriginalImg = np.zeros((h,w),np.uint8)
 
+def CapturePCB():  # PCB기판 이미지 캡쳐
+    capture = cv2.VideoCapture(2)
+    # print("Press the space bar")
 
-# np.ones((3,3),np.uint8)
-
-
-
-def CapturePCB():
-    Pcbimg = cv2.VideoCapture(2)
-
-    while (1):
-        ret,PcbColor = Pcbimg.read()
-        if ret==False:
+    while (True):
+        ret,PcbImg = capture.read()
+        if ret == False:
             continue
-        GrayImg = cv2.cvtColor(PcbColor,cv2.IMREAD_COLOR)
-        GrayImg = cv2.GaussianBlur(GrayImg,(3,3),0)
-        cv2.imshow("gray", GrayImg)
+        cv2.imshow("Press the space bar", PcbImg)
         if cv2.waitKey(1)&0xFF==32:
-            cv2.imwrite('PCB.jpg', GrayImg)
-            OriginalImg =GrayImg #이곳에서 갱신이 일어남
+            cv2.imwrite('PCB.jpg', PcbImg)
+            OriginalImg = PcbImg #이곳에서 갱신이 일어남
             break
         if cv2.waitKey(1)&0xFF==27:
             break
-    Pcbimg.release()
+    capture.release()
 
 def FindHole():
-    
     def nothing(x):
         pass
     cv2.namedWindow('FindHole')
@@ -48,7 +41,8 @@ def FindHole():
 
     CaptureImg = cv2.imread('PCB.jpg') 
     ImgColor = CaptureImg.copy()
-    zeroImg = np.zeros((h,w),np.uint8)
+    # ImgGray = 
+    HoleImg = np.zeros((h,w),np.uint8)
 
 
     ImgGray = cv2.cvtColor(ImgColor, cv2.COLOR_BGR2GRAY)
@@ -75,20 +69,20 @@ def FindHole():
                         pass
                     OriginalCcl[cx] = cy
                 for key,value in OriginalCcl.items():
-                    cv2.line(zeroImg,(key,value),(key,value),(255,0,0),4) # 중심좌표그리기
+                    cv2.line(HoleImg,(key,value),(key,value),(255,0,0),4) # 중심좌표그리기
                     cv2.line(ImgColor,(key,value),(key,value),(255,0,0),4)
         cv2.imshow("FindHole" ,ImgColor) # 보여주기용
-        cv2.imshow("hole",zeroImg)
+        cv2.imshow("hole",HoleImg)
         if cv2.waitKey(1)&0xFF==32:
             break
 
-    cv2.imwrite('findhole.jpg',zeroImg)
+    cv2.imwrite('findhole.jpg',HoleImg)
     cv2.imwrite('availablepoint.jpg',ImgColor)
     cv2.waitKey(0)
 
 def SoldingArea():
     img =  cv2.imread("AutoSolding/result.jpg",cv2.IMREAD_GRAYSCALE)
-    zero = zeroImg.copy()
+    zero = HoleImg.copy()
     ret, img_binary = cv2.threshold(img, 127, 255, 0)
     _,contours, hierarchy = cv2.findContours(img_binary, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
     for cnt in contours:
@@ -103,8 +97,7 @@ def SoldingArea():
         for key,value in SelectedCcl.items():
             if OriginalCcl.get(key):
                 cv2.line(zero,(key,value),(key,value),(255,0,0),13) # 중심좌표그리기
-                # cv2.circle(zeroImg,(key,value),7,(0,255,0),-1)
-    # zero = cv2.cvtColor(zero, cv2.COLOR_GRAY2RGB)
+                # cv2.circle(HoleImg,(key,value),7,(0,255,0),-1)
     cv2.imshow('final',zero)
     cv2.waitKey(0)
 

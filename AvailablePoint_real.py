@@ -7,9 +7,9 @@ OriginalCcl = {}  # 원본영상의 모든 납땝가능한 홀의 좌표
 SelectedCcl = {}  # 납땜하고자하는 spot을 지정해둔 홀의 좌표
 
 DummyImg = cv2.imread('PCB(0).jpg') # 디폴트로 이전영상의 이미지를 넣어둠 캡쳐를 통해 갱신할예정
-h,w,c =DummyImg.shape[:]
-HoleImg = np.zeros((h,w),np.uint8)
-OriginalImg = np.zeros((h,w),np.uint8)
+H,W,C =DummyImg.shape[:]
+HoleImg = np.zeros((H,W,C),np.uint8)
+OriginalImg = np.zeros((H,W,C),np.uint8)
 
 def CapturePCB():  # PCB기판 이미지 캡쳐
     capture = cv2.VideoCapture(2)
@@ -41,7 +41,7 @@ def FindHole():
     cv2.setTrackbarPos('high threshold', 'FindHole', 230)
 
     CapturedImg = cv2.imread('PCB(0).jpg') 
-    HoleImg = np.zeros((h,w),np.uint8)
+    HoleImg = np.zeros((H,W,C),np.uint8)
 
     ImgGray = cv2.cvtColor(CapturedImg, cv2.COLOR_BGR2GRAY)
 
@@ -100,8 +100,8 @@ def SoldingArea():
     cv2.waitKey(0)
 
                 
-while(True):
-    CapturePCB()
-    FindHole()
+
+CapturePCB()
+FindHole()
     # SoldingArea()
 

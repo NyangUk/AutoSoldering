@@ -8,15 +8,17 @@ findflag = False
 checkflag = False
 
 
+
+
 MainBoard = cv2.imread("MainBoard.jpg")
 
 OriginalCcl = {}  # 원본영상의 모든 납땝가능한 홀의 좌표 
 SelectedCcl = {}  # 납땜하고자하는 spot을 지정해둔 홀의 좌표
 
-DummyImg = cv2.imread('PCB(0).jpg') # 디폴트
+# DummyImg = cv2.imread('PCB(0).jpg') # 디폴트
 
-H,W,C =DummyImg.shape
-
+H,W,C = 480,640,3
+DummyImg = np.zeros((H,W,C),np.uint8) 
 OriginalImg = np.zeros((H,W,C),np.uint8) 
 RoiImg = np.zeros((H,W,C),np.uint8)
 OnlyHoleImg = np.zeros((H,W,C),np.uint8)
@@ -43,9 +45,10 @@ def CapturePCB():
             capflag = False
             cv2.imwrite('PCB(0).jpg', PcbImg)
             OriginalImg = PcbImg.copy() #이곳에서 갱신이 일어남
+            print("캡쳐 완료.")
             break
-        if cv2.waitKey(1)&0xFF==27:
-            capflag = True
+        elif cv2.waitKey(1)&0xFF==27:
+            print("캡쳐 취소.")
             break
     cv2.destroyWindow('Capture Image')
     capture.release()
@@ -67,14 +70,14 @@ def CropRoi():
         cv2.namedWindow('Remove ROI')
         cv2.setMouseCallback('Remove ROI',CallROIMouse)
 
-        if cv2.waitKey(1)&0xFF == 27:
-            print("roi 선택을 그만두셨습니다.")               
-            break
-        elif cv2.waitKey(1)&0xFF == 32:
+        if cv2.waitKey(1)&0xFF == 32:
             cv2.imwrite('RemoveROI.jpg',RoiImg)
             roiflag =False
             findflag =True # roi이미지가 있어야만 납땜가능 구역을 찾을수있음
-            print("roi 선택 완료했습니다.")   
+            print("roi 선택 완료했습니다.")  
+            break
+        elif cv2.waitKey(1)&0xFF == 27:
+            print("roi 선택을 그만두셨습니다.")               
             break
     cv2.destroyWindow('Remove ROI')
 # 납땜이 가능한 부분 추출
@@ -91,20 +94,20 @@ def FindHole():
     cv2.setTrackbarPos('low', 'Find Soldering Point', 100)  #트랙바의 초기 value 설정
     cv2.setTrackbarPos('high', 'Find Soldering Point', 230)
 
-    FindedHoleImg = RoiImg.copy()
-    GrayImg = cv2.cvtColor(FindedHoleImg, cv2.COLOR_BGR2GRAY)
+    
 
     while(True):
         low = cv2.getTrackbarPos('low', 'Find Soldering Point')
         high = cv2.getTrackbarPos('high', 'Find Soldering Point')
+        FindedHoleImg = RoiImg.copy()
+        GrayImg = cv2.cvtColor(FindedHoleImg, cv2.COLOR_BGR2GRAY)
         OnlyHoleImg = np.zeros((H,W,C),np.uint8)
-        ret, img_binary = cv2.threshold(GrayImg, low, high, 0)
-        _,contours, hierarchy= cv2.findContours(img_binary, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
+        ret, BinaryImg = cv2.threshold(GrayImg, low, high, 0)
+        _,contours, hierarchy= cv2.findContours(BinaryImg, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
 
         for cnt in contours:
             area = cv2.contourArea(cnt)
-            if area> 60 and area<250:
-                # cv2.drawContours(FindedHoleImg, [cnt], 0, (255, 0, 255), 1)  # 컨투어 그리기
+            if area> 65 and area<250:
                 # 컨투어의 중심좌표구하기 
                 mmt = cv2.moments(cnt)
                 for key,value in mmt.items():
@@ -117,11 +120,15 @@ def FindHole():
                 for key,value in OriginalCcl.items():
                     cv2.line(OnlyHoleImg,(key,value),(key,value),(255,255,255),4)    # 원본이미지 위에  Hole그리기
                     cv2.line(FindedHoleImg,(key,value),(key,value),(0,0,255),4)      # Hole 만 그리기
+
         cv2.imshow("Find Soldering Point" ,FindedHoleImg)  
         cv2.imshow("OnlyHole",OnlyHoleImg)                
         if cv2.waitKey(1)&0xFF==32:
-            print("납땜가능 spot을 찾았습니다.")
+            print("납땜가능 Point을 찾았습니다.")
             findflag = True
+            break
+        elif cv2.waitKey(1)&0xFF== 27:
+            print("납땜가능 Point 찾지 않았습니다.")
             break
     cv2.destroyWindow('Find Soldering Point')
     cv2.destroyWindow('OnlyHole')        
@@ -145,21 +152,23 @@ def CallPointMouse(event ,x,y,flags,param):
         click =False        
 
 def SelectPoint():
-    global selectflag,FindedHoleImg
+    global selectflag,checkflag,FindedHoleImg
     while True:
         cv2.imshow('Select Soldering Point',FindedHoleImg)
         cv2.namedWindow('Select Soldering Point')
         cv2.setMouseCallback('Select Soldering Point',CallPointMouse)
         cv2.imshow('Drawing...',SelectPointImg)
-        
 
-        # elif k ==ord('f'): 
         if cv2.waitKey(1) & 0xFF == 32:               
             print("납땜 활성화 포인트 저장완료")
             cv2.destroyWindow("Select Soldering Point")
             cv2.destroyWindow("Drawing...")
             selectflag =False
             checkflag =True
+            break
+        elif cv2.waitKey(1) & 0xFF == 27:               
+            cv2.destroyWindow("Select Soldering Point")
+            cv2.destroyWindow("Drawing...")
             break
     CheckHole()
     # cv2.imwrite('SelectPoint.jpg',SelectPointImg)
@@ -172,14 +181,14 @@ def CheckHole():
     img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     ret, mask = cv2.threshold(mask ,10, 255, cv2.THRESH_BINARY)
     ActiveHoleImg =cv2.bitwise_and(img,mask,mask =mask)
-    # cv2.imwrite('result.jpg',result)
-    # cv2.imshow('ActiveHoleImg',ActiveHoleImg)
+    cv2.imwrite('CheckHole.jpg',ActiveHoleImg)
+
 # 선택된 부분 활성분
 def SoldingPoint():
     global ActiveHoleImg
     img =ActiveHoleImg.copy()
-    ret, img_binary = cv2.threshold(img, 127, 255, 0)
-    _,contours, hierarchy = cv2.findContours(img_binary, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
+    ret, BinaryImg = cv2.threshold(img, 127, 255, 0)
+    _,contours, hierarchy = cv2.findContours(BinaryImg, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
     for cnt in contours:
         mmt = cv2.moments(cnt)
         for key,value in mmt.items():
@@ -192,9 +201,16 @@ def SoldingPoint():
         for key,value in SelectedCcl.items():
             if OriginalCcl.get(key):
                 cv2.line(img,(key,value),(key,value),(255,0,0),13) # 중심좌표그리기
-                
-    cv2.imshow('final',img)
-    cv2.waitKey(0)
+    cv2.imwrite('RESULT.jpg',img)
+    while(True):
+        cv2.imshow('RESULT',img)
+        if cv2.waitKey(1) & 0xFF == 32:
+            print("납땜을 실행합니다")
+            cv2.destroyWindow("RESULT")
+            break
+
+        
+
  
 if __name__ == "__main__":
     while True:
@@ -223,7 +239,7 @@ if __name__ == "__main__":
                 print("납땜 하고자 하는 포인트를 선택합니다...")
                 SelectPoint()
         elif k==ord('5'):
-            if not capflag and not roiflag and not selectflag:
+            if not capflag and not roiflag and not selectflag and checkflag:
                 cv2.destroyWindow('Menu')
                 print("모든 준비 완료! 납땜 가능포인트을 활성화합니다...")
                 SoldingPoint()
@@ -237,7 +253,7 @@ if __name__ == "__main__":
             checkflag = False
             SelectedCcl.clear()
             OriginalCcl.clear()
-        elif k== 27: # esc
+        elif k== ord('E'): # exit
             cv2.destroyWindow('Menu')
             print("프로그램을 종료합니다...")
             break

@@ -7,9 +7,6 @@ selectflag= True
 findflag = False
 checkflag = False
 
-
-
-
 MainBoard = cv2.imread("MainBoard.jpg")
 
 OriginalCcl = {}  # 원본영상의 모든 납땝가능한 홀의 좌표 
@@ -18,7 +15,6 @@ SelectedCcl = {}  # 납땜하고자하는 spot을 지정해둔 홀의 좌표
 # DummyImg = cv2.imread('PCB(0).jpg') # 디폴트
 
 H,W,C = 480,640,3
-DummyImg = np.zeros((H,W,C),np.uint8) 
 OriginalImg = np.zeros((H,W,C),np.uint8) 
 RoiImg = np.zeros((H,W,C),np.uint8)
 OnlyHoleImg = np.zeros((H,W,C),np.uint8)
